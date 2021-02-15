@@ -2,36 +2,40 @@
 
 void PostEffect::Init(unsigned width, unsigned height)
 {
-	//set up framebuffers
-	int index = int(_buffers.size());
-	_buffers.push_back(new Framebuffer());
-	_buffers[index]->AddColorTarget(GL_RGBA8);
-	_buffers[index]->AddDepthTarget();
-	_buffers[index]->Init(width, height);
+	if (!_shaders.size() > 0)
+	{
 
-	index = int(_shaders.size());
+		int index = int(_buffers.size());
+		_buffers.push_back(new Framebuffer());
+		_buffers[index]->AddColorTarget(GL_RGBA8);
+		_buffers[index]->AddDepthTarget();
+		_buffers[index]->Init(width, height);
+	}
+
 	_shaders.push_back(Shader::Create());
-	_shaders[index]->LoadShaderPartFromFile("shaders/passthrough_vert.glsl", GL_VERTEX_SHADER);
-	_shaders[index]->LoadShaderPartFromFile("shaders/passthrough_frag.glsl", GL_FRAGMENT_SHADER);
-	_shaders[index]->Link();
+	_shaders[_shaders.size() - 1]->LoadShaderPartFromFile("shaders/passthrough_vert.glsl", GL_VERTEX_SHADER);
+	_shaders[_shaders.size() - 1]->LoadShaderPartFromFile("shaders/passthrough_frag.glsl", GL_FRAGMENT_SHADER);
+	_shaders[_shaders.size() - 1]->Link();
+
 }
 
 void PostEffect::ApplyEffect(PostEffect* previousBuffer)
 {
-	BindShader(0);
+	BindShader(_shaders.size() - 1);
 
 	previousBuffer->BindColorAsTexture(0, 0, 0);
-	
+
 	_buffers[0]->RenderToFSQ();
 
 	previousBuffer->UnbindTexture(0);
+
 
 	UnbindShader();
 }
 
 void PostEffect::DrawToScreen()
 {
-	BindShader(0);
+	BindShader(_shaders.size() - 1);
 
 	BindColorAsTexture(0, 0, 0);
 
@@ -50,7 +54,7 @@ void PostEffect::Reshape(unsigned width, unsigned height)
 	}
 }
 
-void PostEffect::clear()
+void PostEffect::Clear()
 {
 	for (unsigned int i = 0; i < _buffers.size(); i++)
 	{
@@ -58,7 +62,7 @@ void PostEffect::clear()
 	}
 }
 
-void PostEffect::unload()
+void PostEffect::Unload()
 {
 	for (unsigned int i = 0; i < _buffers.size(); i++)
 	{
@@ -69,6 +73,7 @@ void PostEffect::unload()
 			_buffers[i] = nullptr;
 		}
 	}
+
 	_shaders.clear();
 }
 
@@ -77,7 +82,7 @@ void PostEffect::BindBuffer(int index)
 	_buffers[index]->Bind();
 }
 
-void PostEffect::unbindBuffer()
+void PostEffect::UnbindBuffer()
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, GL_NONE);
 }
@@ -94,8 +99,7 @@ void PostEffect::BindDepthAsTexture(int index, int textureSlot)
 
 void PostEffect::UnbindTexture(int textureSlot)
 {
-	//binds texture at slot to GL_NONE
-	glad_glActiveTexture(GL_TEXTURE0 + textureSlot);
+	glActiveTexture(GL_TEXTURE0 + textureSlot);
 	glBindTexture(GL_TEXTURE_2D, GL_NONE);
 }
 

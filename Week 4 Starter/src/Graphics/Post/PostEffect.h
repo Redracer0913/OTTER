@@ -6,38 +6,39 @@
 class PostEffect
 {
 public:
-	//initialize this effects [will be overriden in each derived class]
+	//Initialize this effects (will be overriden in each derived class)
 	virtual void Init(unsigned width, unsigned height);
 
-	//applies the effect
+	//Applies the effect
 	virtual void ApplyEffect(PostEffect* previousBuffer);
 	virtual void DrawToScreen();
 
-	//reshapes the buffer
+	//Reshapes the buffer
 	virtual void Reshape(unsigned width, unsigned height);
 
-	//clears the buffers
-	void clear();
+	//Clears the buffers
+	void Clear();
 
-	//unloads the buffers
-	void unload();
+	//Unloads all the buffers
+	void Unload();
 
-	//binds buffers
+	//Binds buffers
 	void BindBuffer(int index);
-	void unbindBuffer();
+	void UnbindBuffer();
 
-	//bind textures
+	//Bind textures
 	void BindColorAsTexture(int index, int colorBuffer, int textureSlot);
 	void BindDepthAsTexture(int index, int textureSlot);
 	void UnbindTexture(int textureSlot);
 
-	//bind shaders
+	//Bind shaders
 	void BindShader(int index);
 	void UnbindShader();
 
 protected:
-	//holds all our buffers for the effects
-	std::vector<Framebuffer*>_buffers;
-	//holds all our shaders for the effects
-	std::vector<Shader::sptr>_shaders;
+	//Holds all our buffers for the effects
+	std::vector<Framebuffer*> _buffers;
+
+	//Holds all our shaders for the effects
+	std::vector<Shader::sptr> _shaders;
 };

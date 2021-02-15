@@ -5,17 +5,18 @@
 class SepiaEffect : public PostEffect
 {
 public:
-	//initializes framebuffer
+	//Initializes framebuffer
 	void Init(unsigned width, unsigned height) override;
 
-	//applies effect to this buffer
+	//Applies effect to this buffer
 	void ApplyEffect(PostEffect* buffer) override;
 
-	//getters
+	//Getters
 	float GetIntensity() const;
 
-	//setters
+	//Setters
 	void SetIntensity(float intensity);
+
 private:
 	float _intensity = 0.7f;
 };

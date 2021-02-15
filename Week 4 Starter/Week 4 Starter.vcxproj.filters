@@ -18,6 +18,9 @@
     <ClInclude Include="src\Graphics\LUT.h">
       <Filter>Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="src\Graphics\Post\ColorCorrectEffect.h">
+      <Filter>Graphics\Post</Filter>
+    </ClInclude>
     <ClInclude Include="src\Graphics\Post\GreyscaleEffect.h">
       <Filter>Graphics\Post</Filter>
     </ClInclude>
@@ -43,6 +46,9 @@
     </ClCompile>
     <ClCompile Include="src\Graphics\LUT.cpp">
       <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Graphics\Post\ColorCorrectEffect.cpp">
+      <Filter>Graphics\Post</Filter>
     </ClCompile>
     <ClCompile Include="src\Graphics\Post\GreyscaleEffect.cpp">
       <Filter>Graphics\Post</Filter>

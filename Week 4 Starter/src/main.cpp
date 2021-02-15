@@ -50,17 +50,12 @@ int main() {
 		passthroughShader->LoadShaderPartFromFile("shaders/passthrough_frag.glsl", GL_FRAGMENT_SHADER);
 		passthroughShader->Link();
 
-		Shader::sptr colorCorrectionShader = Shader::Create();
-		colorCorrectionShader->LoadShaderPartFromFile("shaders/vertex_shader.glsl", GL_VERTEX_SHADER);
-		colorCorrectionShader->LoadShaderPartFromFile("shaders/post/color_correction_frag.glsl", GL_FRAGMENT_SHADER);
-		colorCorrectionShader->Link();
-
 		// Load our shaders
 		Shader::sptr shader = Shader::Create();
 		shader->LoadShaderPartFromFile("shaders/vertex_shader.glsl", GL_VERTEX_SHADER);
 		shader->LoadShaderPartFromFile("shaders/frag_blinn_phong_textured.glsl", GL_FRAGMENT_SHADER);
 		shader->Link();
-	
+
 		glm::vec3 lightPos = glm::vec3(0.0f, 0.0f, 5.0f);
 		glm::vec3 lightCol = glm::vec3(0.9f, 0.85f, 0.5f);
 		float     lightAmbientPow = 0.05f;
@@ -81,19 +76,22 @@ int main() {
 		shader->SetUniform("u_LightAttenuationConstant", 1.0f);
 		shader->SetUniform("u_LightAttenuationLinear", lightLinearFalloff);
 		shader->SetUniform("u_LightAttenuationQuadratic", lightQuadraticFalloff);
+
 		PostEffect* basicEffect;
+
 		int activeEffect = 0;
 		std::vector<PostEffect*> effects;
+
 		SepiaEffect* sepiaEffect;
-		//effects.push_back(sepiaEffect); //moved
 		GreyscaleEffect* greyscaleEffect;
-		//effects.push_back(greyscaleEffect); //moved
+		ColorCorrectEffect* colorCorrectEffect;
 		
+
 		// We'll add some ImGui controls to control our shader
 		BackendHandler::imGuiCallbacks.push_back([&]() {
 			if (ImGui::CollapsingHeader("Effect controls"))
 			{
-				(ImGui::SliderInt("Chosen effect", &activeEffect, 0, effects.size() - 1));
+				ImGui::SliderInt("Chosen Effect", &activeEffect, 0, effects.size() - 1);
 
 				if (activeEffect == 0)
 				{
@@ -101,20 +99,37 @@ int main() {
 
 					SepiaEffect* temp = (SepiaEffect*)effects[activeEffect];
 					float intensity = temp->GetIntensity();
-				}
-				if (activeEffect == 1)
-				{
-					ImGui::Text("Active Effect: Greyscale Effect");
 
-					GreyscaleEffect* temp = (GreyscaleEffect*)effects[activeEffect];
-					float intensity = temp->GetIntensity();
 					if (ImGui::SliderFloat("Intensity", &intensity, 0.0f, 1.0f))
 					{
 						temp->SetIntensity(intensity);
 					}
 				}
+				if (activeEffect == 1)
+				{
+					ImGui::Text("Active Effect: Greyscale Effect");
+					
+					GreyscaleEffect* temp = (GreyscaleEffect*)effects[activeEffect];
+					float intensity = temp->GetIntensity();
 
-				
+					if (ImGui::SliderFloat("Intensity", &intensity, 0.0f, 1.0f))
+					{
+						temp->SetIntensity(intensity);
+					}
+				}
+				if (activeEffect == 2)
+				{
+					ImGui::Text("Active Effect: Color Correct Effect");
+
+					ColorCorrectEffect* temp = (ColorCorrectEffect*)effects[activeEffect];
+					static char input[BUFSIZ];
+					ImGui::InputText("Lut File to Use", input, BUFSIZ);
+
+					if (ImGui::Button("SetLUT", ImVec2(200.0f, 40.0f)))
+					{
+						temp->SetLUT(LUT3D(std::string(input)));
+					}
+				}
 			}
 			if (ImGui::CollapsingHeader("Environment generation"))
 			{
@@ -183,15 +198,16 @@ int main() {
 		#pragma region TEXTURE LOADING
 
 		// Load some textures from files
-		Texture2D::sptr stone = Texture2D::LoadFromFile("images/Stone_001_Diffuse.png");
-		Texture2D::sptr stoneSpec = Texture2D::LoadFromFile("images/Stone_001_Specular.png");
+		Texture2D::sptr stone = Texture2D::LoadFromFile("images/texturerock.png");// Stone_001_Diffuse.png");
+		Texture2D::sptr stoneSpec = Texture2D::LoadFromFile("images/Material Base Color.png"); //Stone_001_Specular.png");
 		Texture2D::sptr grass = Texture2D::LoadFromFile("images/grass.jpg");
 		Texture2D::sptr noSpec = Texture2D::LoadFromFile("images/grassSpec.png");
+		Texture2D::sptr treeRound = Texture2D::LoadFromFile("images/Material Base Color tree texture.png");
+		Texture2D::sptr pineTree = Texture2D::LoadFromFile("images/tree base texture.png");
 		Texture2D::sptr box = Texture2D::LoadFromFile("images/box.bmp");
 		Texture2D::sptr boxSpec = Texture2D::LoadFromFile("images/box-reflections.bmp");
 		Texture2D::sptr simpleFlora = Texture2D::LoadFromFile("images/SimpleFlora.png");
-		LUT3D testCube("cubes/new.cube");
-
+		LUT3D testCube("cubes/BrightenedCorrection.cube");
 
 		// Load the cube map
 		//TextureCubeMap::sptr environmentMap = TextureCubeMap::LoadFromImages("images/cubemaps/skybox/sample.jpg");
@@ -248,11 +264,25 @@ int main() {
 
 		ShaderMaterial::sptr simpleFloraMat = ShaderMaterial::Create();
 		simpleFloraMat->Shader = shader;
-		simpleFloraMat->Set("s_Diffuse", simpleFlora);
+		simpleFloraMat->Set("s_Diffuse", stoneSpec);
 		simpleFloraMat->Set("s_Specular", noSpec);
 		simpleFloraMat->Set("u_Shininess", 8.0f);
 		simpleFloraMat->Set("u_TextureMix", 0.0f);
 
+
+		ShaderMaterial::sptr simpletree = ShaderMaterial::Create();
+		simpletree->Shader = shader;
+		simpletree->Set("s_Diffuse", pineTree);
+		simpletree->Set("s_Specular", noSpec);
+		simpletree->Set("u_Shininess", 8.0f);
+		simpletree->Set("u_TextureMix", 0.0f);
+
+		ShaderMaterial::sptr simpletree2 = ShaderMaterial::Create();
+		simpletree2->Shader = shader;
+		simpletree2->Set("s_Diffuse", treeRound);
+		simpletree2->Set("s_Specular", noSpec);
+		simpletree2->Set("u_Shininess", 8.0f);
+		simpletree2->Set("u_TextureMix", 0.0f);
 		GameObject obj1 = scene->CreateEntity("Ground"); 
 		{
 			VertexArrayObject::sptr vao = ObjLoader::LoadFromFile("models/plane.obj");
@@ -261,9 +291,9 @@ int main() {
 
 		GameObject obj2 = scene->CreateEntity("monkey_quads");
 		{
-			VertexArrayObject::sptr vao = ObjLoader::LoadFromFile("models/monkey_quads.obj");
+			VertexArrayObject::sptr vao = ObjLoader::LoadFromFile("models/rock model midterm 1.obj");
 			obj2.emplace<RendererComponent>().SetMesh(vao).SetMaterial(stoneMat);
-			obj2.get<Transform>().SetLocalPosition(0.0f, 0.0f, 2.0f);
+			obj2.get<Transform>().SetLocalPosition(0.0f, 0.0f, 0.0f);
 			obj2.get<Transform>().SetLocalRotation(0.0f, 0.0f, -90.0f);
 			BehaviourBinding::BindDisabled<SimpleMoveBehaviour>(obj2);
 		}
@@ -278,11 +308,11 @@ int main() {
 		glm::vec2 spawnFromHere = glm::vec2(-19.0f, -19.0f);
 		glm::vec2 spawnToHere = glm::vec2(19.0f, 19.0f);
 
-		EnvironmentGenerator::AddObjectToGeneration("models/simplePine.obj", simpleFloraMat, 150,
+		EnvironmentGenerator::AddObjectToGeneration("models/tree for midterm.obj", simpletree, 150,
 			spawnFromHere, spawnToHere, allAvoidAreasFrom, allAvoidAreasTo);
-		EnvironmentGenerator::AddObjectToGeneration("models/simpleTree.obj", simpleFloraMat, 150,
+		EnvironmentGenerator::AddObjectToGeneration("models/tree2formidterm.obj", simpletree2, 150,
 			spawnFromHere, spawnToHere, allAvoidAreasFrom, allAvoidAreasTo);
-		EnvironmentGenerator::AddObjectToGeneration("models/simpleRock.obj", simpleFloraMat, 40,
+		EnvironmentGenerator::AddObjectToGeneration("models/rock 2 for midterm.obj", simpleFloraMat, 40,
 			spawnFromHere, spawnToHere, rockAvoidAreasFrom, rockAvoidAreasTo);
 		EnvironmentGenerator::GenerateEnvironment();
 
@@ -301,49 +331,39 @@ int main() {
 			BehaviourBinding::Bind<CameraControlBehaviour>(cameraObject);
 		}
 
-		
-		
-			int width, height;
-			glfwGetWindowSize(BackendHandler::window, &width, &height);
+		int width, height;
+		glfwGetWindowSize(BackendHandler::window, &width, &height);
 
-			Framebuffer* colorCorrect;
-			GameObject colorCorrectionObj = scene->CreateEntity("Color Correct");
-			{
-				colorCorrect= &colorCorrectionObj.emplace <Framebuffer> ();
-				colorCorrect->AddColorTarget(GL_RGBA8);
-				colorCorrect->AddDepthTarget();
-				colorCorrect->Init(width, height);
-			}
+		GameObject framebufferObject = scene->CreateEntity("Basic Effect");
+		{
+			basicEffect = &framebufferObject.emplace<PostEffect>();
+			basicEffect->Init(width, height);
+		}
 
+		GameObject sepiaEffectObject = scene->CreateEntity("Sepia Effect");
+		{
+			sepiaEffect = &sepiaEffectObject.emplace<SepiaEffect>();
+			sepiaEffect->Init(width, height);
+		}
+		effects.push_back(sepiaEffect);
 
-			/*PostEffect* basicEffect;*/
-			GameObject framebufferObject = scene->CreateEntity("Basic Effect");
-			{
-				basicEffect = &framebufferObject.emplace<PostEffect>();
-				/*	basicEffect->AddDepthTarget();
-					basicEffect->AddColorTarget(GL_RGBA8);*/
-				basicEffect->Init(width, height);
-			}
-			//SepiaEffect* sepiaEffect;
-			GameObject sepiaEffectObject = scene->CreateEntity("Sepia Effect");
-			{
-				sepiaEffect = &sepiaEffectObject.emplace<SepiaEffect>();
-				sepiaEffect->Init(width, height);
-			}
-			effects.push_back(sepiaEffect);
-		//GreyscaleEffect* greyscaleEffect;
 		GameObject greyscaleEffectObject = scene->CreateEntity("Greyscale Effect");
 		{
-			/*int width, height;
-			glfwGetWindowSize*/
 			greyscaleEffect = &greyscaleEffectObject.emplace<GreyscaleEffect>();
 			greyscaleEffect->Init(width, height);
 		}
 		effects.push_back(greyscaleEffect);
-	
+		
+		GameObject colorCorrectEffectObject = scene->CreateEntity("Greyscale Effect");
+		{
+			colorCorrectEffect = &colorCorrectEffectObject.emplace<ColorCorrectEffect>();
+			colorCorrectEffect->Init(width, height);
+		}
+		effects.push_back(colorCorrectEffect);
+
 		#pragma endregion 
 		//////////////////////////////////////////////////////////////////////////////////////////
-		
+
 		/////////////////////////////////// SKYBOX ///////////////////////////////////////////////
 		{
 			// Load our shaders
@@ -443,13 +463,12 @@ int main() {
 			});
 
 			// Clear the screen
-			basicEffect->clear();
-			colorCorrect->Clear();
-		/*	greyscaleEffect->clear();
-			sepiaEffect->clear();*/
+			basicEffect->Clear();
+			/*greyscaleEffect->Clear();
+			sepiaEffect->Clear();*/
 			for (int i = 0; i < effects.size(); i++)
 			{
-				effects[i]->clear();
+				effects[i]->Clear();
 			}
 
 
@@ -510,30 +529,12 @@ int main() {
 				BackendHandler::RenderVAO(renderer.Material->Shader, renderer.Mesh, viewProjection, transform);
 			});
 
-			basicEffect->unbindBuffer();
+			basicEffect->UnbindBuffer();
+
+			effects[activeEffect]->ApplyEffect(basicEffect);
 			
-			colorCorrect->Unbind();
-
-			colorCorrectionShader->Bind();
-			colorCorrect->BindColorAsTexture(0, 0);
-			testCube.bind(30);
-
-			colorCorrect->DrawFullscreenQuad();
-
-			testCube.unbind(30);
-			colorCorrect->UnbindTexture(0);
-
-			colorCorrectionShader->UnBind();
-			//basicEffect->DrawToScreen();
-		//	greyscaleEffect->ApplyEffect(basicEffect);
-
-		//	sepiaEffect->ApplyEffect(basicEffect);
-		//	effects[activeEffect]->ApplyEffect(basicEffect);
-
-		////	greyscaleEffect->DrawToScreen();
-
-		//	//sepiaEffect->DrawToScreen();
-		//	effects[activeEffect]->DrawToScreen();
+			effects[activeEffect]->DrawToScreen();
+			
 			// Draw our ImGui content
 			BackendHandler::RenderImGui();
 

@@ -111,6 +111,7 @@
   <ItemGroup>
     <ClInclude Include="src\Graphics\Framebuffer.h" />
     <ClInclude Include="src\Graphics\LUT.h" />
+    <ClInclude Include="src\Graphics\Post\ColorCorrectEffect.h" />
     <ClInclude Include="src\Graphics\Post\GreyscaleEffect.h" />
     <ClInclude Include="src\Graphics\Post\PostEffect.h" />
     <ClInclude Include="src\Graphics\Post\SepiaEffect.h" />
@@ -121,6 +122,7 @@
   <ItemGroup>
     <ClCompile Include="src\Graphics\Framebuffer.cpp" />
     <ClCompile Include="src\Graphics\LUT.cpp" />
+    <ClCompile Include="src\Graphics\Post\ColorCorrectEffect.cpp" />
     <ClCompile Include="src\Graphics\Post\GreyscaleEffect.cpp" />
     <ClCompile Include="src\Graphics\Post\PostEffect.cpp" />
     <ClCompile Include="src\Graphics\Post\SepiaEffect.cpp" />
